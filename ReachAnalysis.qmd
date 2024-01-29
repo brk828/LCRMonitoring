@@ -1,0 +1,47 @@
+---
+author: "B.R. Kesner"
+format: html
+echo: false
+---
+
+```{r}
+#| warning: false
+# Before rendering document declare the reach
+StudyReach <- 2
+
+SurvivalDAL <- 120 # Day cutoff for any post-stocking survival criteria
+
+Sp <- "XYTE" # Species of interest GIEL - bonytail, XYTE - razorback
+
+# Pick a first FY to use scanning data
+FirstScanFY = 2013
+
+# Any size class analysis will break fish into 3 size classes
+# Minimum TL for Size Class 2
+SizeClass2 <- 400
+# Minimum TL for Size Class 3
+SizeClass3 <- 500
+
+source("DataWrangling.R")
+
+# retain a vector of dataframes from data wrangling
+# This is so I can cleanup temporary dataframes for each analysis but keep the 
+# ones needed for each analysis
+CoreDataFrames <- ls()[vapply(ls(), function(x) is.data.frame(get(x)), logical(1))]
+
+source("AgeStructure.R")
+
+```
+This summary analysis for MSCP Reach `r StudyReach` is auto-generated and results stated within should be considered preliminary.  These results are based on an analysis of stocking and scanning records.  PIT scanning records are restricted to  Fiscal Year (FY) `r FirstScanFY` through FY `r CurrentFY`.  Several approaches are used to assess the overall status of the population in the reach.  Known survival analysis provides a detailed fish by fish accounting of the fish that are known to be alive in the reach based on PIT scanning.  All fish must be at large for a minimum `r SurvivalDAL` days of PIT scanning regardless of tagging date.    
+
+##Age Structure
+
+The age structure of the PIT scanned population (134 kHz PIT tags) is based on post-release contacts of fish with a confirmed stocking record.  The age is determined...  Total length (TL) at release is simplified into two categories; less than `r SizeClass2` and greater than or equal to `r SizeClass2`.  Size at release for all stockings in the database by Release FY from `r CurrentFY-14` through `r CurrentFY-2` is provided in @fig-ReleaseSizePlot
+
+```{r}
+#| label: fig-ReleaseSizePlot
+#| fig-cap: "Initial stocking known survivors over time by sex."
+#| warning: false
+ReleaseSizePlot
+
+```
