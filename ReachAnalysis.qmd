@@ -7,7 +7,10 @@ echo: false
 ```{r}
 #| warning: false
 # Before rendering document declare the reach
-StudyReach <- 3
+
+ReportingFY <- 2024
+
+StudyReach <- 2
 
 SurvivalDAL <- 120 # Day cutoff for any post-stocking survival criteria
 

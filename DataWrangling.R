@@ -64,26 +64,32 @@ packages(magrittr)  # allows use of %<>% assignment pipe
 packages(glmmTMB) # General linear mixed model analysis built on TMB automatic differentiation engine
 packages(lubridate)
 
-CurrentFY <- if(exists("CurrentFY") == FALSE) {
-  CurrentFY = ifelse(month(Sys.Date())>9, year(Sys.Date())+1, year(Sys.Date()))
+ReportingFY <- if(exists("ReportingFY") == FALSE) {
+  ReportingFY = ifelse(month(Sys.Date())>9, year(Sys.Date())+1, year(Sys.Date()))
 }
 
 
 # Restrict PITindex dataframe to study reach only
 ReachPITIndex <- BasinPITIndex %>%
-  filter(Reach == StudyReach, Species == Sp) 
+  filter(Reach == StudyReach) 
 
 rm(BasinPITIndex)
 
 # Create Reach specific dataframes and remove basinwide ones
-ReachContacts <- BasinContacts %>% filter(Reach == StudyReach) %>%
-  left_join(ReachPITIndex %>% select(PIT, PITIndex, DateVerified), by = "PIT") %>%
+ReachContacts <- BasinContacts %>% 
+  filter(Reach == StudyReach) %>%
+  rename(ScanZone = DecimalZone, ScanLocation = Location, ScanKm = RiverKm, 
+         ScanDate = Date, ScanTime = DateTime) %>%
+  left_join(ReachPITIndex %>% 
+              select(Species, PIT, PITIndex, DateVerified, ReleaseZone, ReleaseDate,
+                     ReleaseTL, Sex, ReleaseFY, ReleaseKm), by = "PIT") %>%
   mutate(DateVerified = as.Date(DateVerified),
-         ScanYear = year(Date),
+         ScanYear = year(ScanDate),
          DAL = ifelse(is.na(DateVerified), 0, 
-                      as.integer(difftime(Date, DateVerified, unit = 'days')))) %>%
-  select(Reach, PITPrefix, PIT, PITIndex, Date, DateTime, ScanHr, ScanYear, ScanFY, 
-         DecimalZone, UnitType, DateVerified, DAL)
+                      as.integer(difftime(ScanDate, DateVerified, unit = 'days')))) %>%
+  select(Reach, Species, PIT, PITIndex, Sex, ScanYear, ScanDate, ScanHr, ScanTime, 
+         ScanFY, ScanLocation, ScanZone, ScanKm, ReleaseZone, ReleaseKm, ReleaseDate, 
+         ReleaseFY, ReleaseTL, DAL, PITPrefix, UnitType, DateVerified, EffortFY)
 
 rm(BasinContacts)
 
@@ -95,17 +101,17 @@ rm(BasinEffort)
 ReachContactsNoIndex <- ReachContacts %>%
   filter(is.na(PITIndex)) %>%
   group_by(PIT) %>%
-  summarise(Contacts = n(), FirstScan = min(DateTime), LastScan = max(DateTime)) %>%
+  summarise(Contacts = n(), FirstScan = min(ScanTime), LastScan = max(ScanTime)) %>%
   ungroup() %>%
   arrange(desc(Contacts))
 
 # Create dataframe of only the most recent contact of all contacts from reach
 ReachLastContact <- ReachContacts %>% 
   filter(!is.na(PITIndex)) %>%
-  arrange(PITIndex, desc(DateTime)) %>%
+  arrange(PITIndex, desc(ScanTime)) %>%
   group_by(PITIndex) %>%
   dplyr::slice(1) %>%
-  mutate(LastScan = as.Date(Date)) %>% 
+  mutate(LastScan = as.Date(ScanDate)) %>% 
   select(PITIndex, LastScan, ScanHr)
 
 # Clean up table, add size classes, create event and disposition fields for future NFWG table structure,

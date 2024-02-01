@@ -1,14 +1,11 @@
-## - Check for existence of main tables, and if they don't, install them.
-
-# Load Scanning data tables if needed from file or run code to develop them
-if(exists("ScanningTable")==FALSE){
-  if(file.exists("dependencies/ReportDataTables.RData")){
-    load("dependencies/ReportDataTables.RData")
-  }
-  else{source("ImportDataWrangling.R")}
+# If this script is run alone, data wrangling must be run first
+if(exists("StudyReach") == FALSE) {
+  source("DataWrangling.R")
 }
 
 packages(dplyr)
+packages(ggplot2)
+packages(lubridate)
 packages(stringr)
 packages(rgdal)
 
@@ -16,24 +13,14 @@ packages(rgdal)
 #########
 ############################ FY Scanning Summaries
 #########
-#Turn "unit_type" blanks into "Submersible" (all blanks in dataset were actually submersibles)
-# No blanks as of Oct 2022
-#ScanEffortTable$unit_type[ScanEffortTable$unit_type == ""] <- "Submersible"
-
-
-#Same for "Allflex", actually a submersible. Corrected on Ncreased.
-# No Allflex as of Oct 2022
-#ScanEffortTable$unit_type[ScanEffortTable$unit_type == "Allflex"] <- "Submersible"
-
 
 ############################ Total scan hours (Total, Submersible, and Shore Based)
-#########
 
 #-Reduce scan data
-ScanEffortFY <- MohaveScanEffort %>% 
+ScanEffortFY <- ReachEffort %>% 
   filter(EffortFY == ReportingFY)
 
-ScanDataFY <- MohaveScanning %>% 
+ScanDataFY <- ReachContacts %>% 
   filter (EffortFY == ReportingFY)
 
 ##### Longest valid submersible scan time in scan hours
@@ -43,13 +30,13 @@ maxsub <- ScanEffortFY %>%
 filter(ScanTime == max(ScanTime))
 
 # Prints out max scan time in hours
-maxsub$ScanTime/60
+maxsub <- maxsub$ScanTime/60
 
 #-Sum scanning minutes, convert to hours 
 ScanTimeFY <- ScanEffortFY %>% 
   summarise(TotalTime = sum(ScanTime)/60)
 
-ScanTimeFY$TotalTime
+ScanTimeFY <- ScanTimeFY$TotalTime
 
 
 ############
@@ -74,7 +61,7 @@ ScanTimeByLocationFY <- ScanEffortFY %>%
 
 
 ContactsByLocationFY <- ScanDataFY %>%
-  group_by(Location) %>%
+  group_by(ScanLocation) %>%
   summarise(Contacts=n(), UniquePIT = n_distinct(PIT))
 
 #######
@@ -83,7 +70,7 @@ ContactsByLocationFY <- ScanDataFY %>%
 ### - Total uniques in FY
 
 # unique PIT tags
-n_distinct(ScanDataFY$PIT)
+DistinctPITsFY <- n_distinct(ScanDataFY$PIT)
 
 UniqueFishFY <- ScanDataFY %>%
   filter(!is.na(PITIndex)) %>%
@@ -92,16 +79,16 @@ UniqueFishFY <- ScanDataFY %>%
   ungroup()
 
 # Total PIT contacts with a record in the NFWG database
-sum(UniqueFishFY$PITContacted)
+DistinctPITNFWGFY <- sum(UniqueFishFY$PITContacted)
 
 # This gives the number of unique fish contacted
-nrow(UniqueFishFY)
+UniqueFishContact <- nrow(UniqueFishFY)
 
 # Total number of fish contacted by two different PIT tags
-nrow(filter(UniqueFishFY, PITContacted==2))
+DoubleTagContacts <- nrow(filter(UniqueFishFY, PITContacted==2))
 
 # Total number of fish contacted by three different PIT tags
-nrow(filter(UniqueFishFY, PITContacted==3))
+TripleTagContacts <- nrow(filter(UniqueFishFY, PITContacted==3))
 
 
 #######
@@ -120,36 +107,36 @@ GIELandXYTETotalsFY <- UniqueFishFY %>%
 ##
 
 ############ Total contacts fy, both species, by zone
-TotalContactsByZoneFY <- ScanDataFY %>% count(DecimalZone, sort=TRUE)
+TotalContactsByZoneFY <- ScanDataFY %>% count(ScanZone, sort=TRUE)
 
 ############ Total UNIQUE contacts FY, both species, by zone
 #-Unique contacts, but by zone 
 
 ZoneSummaryFY <- ScanDataFY %>%
-  group_by(Species, DecimalZone, PIT, PITIndex) %>%
+  group_by(Species, ScanZone, PIT, PITIndex) %>%
   summarise(Contacts = n()) %>%
   ungroup() %>%
-  group_by(DecimalZone) %>%
+  group_by(ScanZone) %>%
   summarise(Contacts = sum(Contacts), PITContacts = n_distinct(PIT), 
             WithRecord = sum(!is.na(PITIndex))) %>%
   ungroup() 
 
 ZoneUniqueFY <- ScanDataFY %>%
-  filter(Species == "XYTE", !is.na(PITIndex)) %>%
+  filter(!is.na(PITIndex)) %>%
   mutate(Released = !is.na(ReleaseDate)) %>%
-  group_by(DecimalZone, PITIndex, Released) %>%
+  group_by(Species, ScanZone, PITIndex, Released) %>%
   summarise(PITContacted = n_distinct(PIT),
             Released = max(Released)) %>%
                 ungroup() %>%
-  group_by(DecimalZone) %>%
-  summarise(UniqueXYTE = n_distinct(PITIndex), DoubleContacts = sum(PITContacted == 2),
+  group_by(Species, ScanZone) %>%
+  summarise(UniqueFish = n_distinct(PITIndex), DoubleContacts = sum(PITContacted == 2),
    TripleContacts = sum(PITContacted == 3), FishReleased = sum(Released >0)) %>%
   ungroup()
               
 FishContactedBothZones <- ScanDataFY %>%
   filter(Species == "XYTE", !is.na(PITIndex)) %>%
   group_by(PITIndex) %>%
-  summarise(River = sum(DecimalZone == 2.1), Basin = sum(DecimalZone == 2.3))
+  summarise(River = sum(ScanZone == 2.1), Basin = sum(ScanZone == 2.3))
 FishContactedBothZones <- FishContactedBothZones %>%
   filter(River > 0, Basin > 0)
 

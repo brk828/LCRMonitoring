@@ -22,7 +22,7 @@ TLCutoffText <- paste0(TLCMCut, "0")
 
 
 ReachReleaseSizes  <- ReachReleases %>%
-  filter(ReleaseFY > CurrentFY-14, ReleaseFY < CurrentFY - 2, !is.na(TLCM))%>%
+  filter(ReleaseFY > ReportingFY-14, ReleaseFY < ReportingFY - 2, !is.na(TLCM))%>%
   mutate(Size = factor(ifelse(TLCM >= TLCMCut, 
                               paste0(">=", TLCutoffText, " mm TL"), 
                               paste0("<", TLCutoffText, " mm TL")))) %>%
@@ -30,8 +30,8 @@ ReachReleaseSizes  <- ReachReleases %>%
 
 ReleaseSizePlot <- ggplot(ReachReleaseSizes, aes(ReleaseFY)) + 
   geom_bar(aes(fill = Size), colour="black") +
-  scale_x_continuous(limits = c(CurrentFY-15, CurrentFY-1), 
-                     breaks = seq(CurrentFY-14, CurrentFY-1, 2)) +
+  scale_x_continuous(limits = c(ReportingFY-15, ReportingFY-1), 
+                     breaks = seq(ReportingFY-14, ReportingFY-1, 2)) +
   scale_y_continuous(limits = c(0, 10000)) +
   scale_fill_manual(values = c('#FFFFFF','#000011')) +
   labs(x = "Release FY", y = "Number of Fish Released") +
@@ -44,7 +44,7 @@ ReleaseSizePlot
 dev.off()
 
 ReachYAL <- ReachContacts %>% 
-  filter(ScanFY < CurrentFY)  %>%
+  filter(ScanFY < ReportingFY)  %>%
   select(-PITIndex, -PITPrefix, -DateTime) %>%
   inner_join(ReachPITIndex %>%
                select(Species, TLCM, ReleaseFY, Sex, PIT, PITIndex,
