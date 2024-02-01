@@ -1,4 +1,11 @@
+# B. Kesner 29 January 2024
+# This is an age structure analysis based on the 2023 Mohave report to be run
+# as part of the general Reach analysis auto-generated report.
 
+# If this script is run alone, data wrangling must be run first
+if(exists("StudyReach") == FALSE) {
+  source("DataWrangling.R")
+  }
 MinimumContacts = 200 # cutoff of total unique contacts per zone for inclusion in analysis
 
 packages(dplyr)
