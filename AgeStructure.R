@@ -20,9 +20,10 @@ TLCMCut <- SizeClass2*.1
 # Cutoff text for figures is mm in text format.
 TLCutoffText <- paste0(TLCMCut, "0")
 
-
 ReachReleaseSizes  <- ReachReleases %>%
-  filter(ReleaseFY > ReportingFY-14, ReleaseFY < ReportingFY - 2, !is.na(TLCM))%>%
+  filter(ReleaseFY > ReportingFY - 14) %>%
+  filter(ReleaseFY < ReportingFY - 2) %>%
+  filter(!is.na(TLCM)) %>%
   mutate(Size = factor(ifelse(TLCM >= TLCMCut, 
                               paste0(">=", TLCutoffText, " mm TL"), 
                               paste0("<", TLCutoffText, " mm TL")))) %>%
@@ -45,16 +46,16 @@ dev.off()
 
 ReachYAL <- ReachContacts %>% 
   filter(ScanFY < ReportingFY)  %>%
-  select(-PITIndex, -PITPrefix, -DateTime) %>%
+  select(-PITIndex, -PITPrefix) %>%
   inner_join(ReachPITIndex %>%
-               select(Species, TLCM, ReleaseFY, Sex, PIT, PITIndex,
-                      ReleaseReach = Reach, ReleaseZone, FirstCensus), 
+               select(TLCM, PIT, PITIndex,
+                      ReleaseReach = Reach, FirstCensus), 
              by = "PIT") %>%
   mutate(ReleaseAge = ScanFY - ReleaseFY - 1) %>% 
   filter(Species == Sp, !is.na(ReleaseFY), 
          ReleaseAge>0, ScanFY >= FirstScanFY) %>%
   dplyr::select(PITIndex, ScanFY, ReleaseFY, Sex, TLCM, ReleaseZone, 
-                ScanZone = DecimalZone, ReleaseAge) %>% 
+                ScanZone, ReleaseAge) %>% 
   group_by(PITIndex, ScanFY, Sex, TLCM, ReleaseZone, ScanZone, ReleaseAge, ReleaseFY) %>%
   summarise(Contacts = n()) %>%
   ungroup()

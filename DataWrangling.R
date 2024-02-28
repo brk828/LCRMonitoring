@@ -64,7 +64,7 @@ packages(magrittr)  # allows use of %<>% assignment pipe
 packages(glmmTMB) # General linear mixed model analysis built on TMB automatic differentiation engine
 packages(lubridate)
 
-ReportingFY <- if(exists("ReportingFY") == FALSE) {
+if(exists("ReportingFY") == FALSE) {
   ReportingFY = ifelse(month(Sys.Date())>9, year(Sys.Date())+1, year(Sys.Date()))
 }
 
