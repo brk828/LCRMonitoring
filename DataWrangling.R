@@ -71,7 +71,7 @@ if(exists("ReportingFY") == FALSE) {
 
 # Restrict PITindex dataframe to study reach only
 ReachPITIndex <- BasinPITIndex %>%
-  filter(Reach == StudyReach) 
+  filter(Reach == StudyReach, Species == Sp) 
 
 rm(BasinPITIndex)
 
@@ -89,7 +89,8 @@ ReachContacts <- BasinContacts %>%
                       as.integer(difftime(ScanDate, DateVerified, unit = 'days')))) %>%
   select(Reach, Species, PIT, PITIndex, Sex, ScanYear, ScanDate, ScanHr, ScanTime, 
          ScanFY, ScanLocation, ScanZone, ScanKm, ReleaseZone, ReleaseKm, ReleaseDate, 
-         ReleaseFY, ReleaseTL, DAL, PITPrefix, UnitType, DateVerified, EffortFY)
+         ReleaseFY, ReleaseTL, DAL, PITPrefix, UnitType, DateVerified, EffortFY) %>%
+  filter(Species == Sp)
 
 rm(BasinContacts)
 
@@ -97,13 +98,6 @@ ReachEffort <- BasinEffort %>%
   filter(Reach == StudyReach)
 
 rm(BasinEffort)
-
-ReachContactsNoIndex <- ReachContacts %>%
-  filter(is.na(PITIndex)) %>%
-  group_by(PIT) %>%
-  summarise(Contacts = n(), FirstScan = min(ScanTime), LastScan = max(ScanTime)) %>%
-  ungroup() %>%
-  arrange(desc(Contacts))
 
 # Create dataframe of only the most recent contact of all contacts from reach
 ReachLastContact <- ReachContacts %>% 

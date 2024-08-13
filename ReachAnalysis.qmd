@@ -17,7 +17,7 @@ SurvivalDAL <- 120 # Day cutoff for any post-stocking survival criteria
 Sp <- "XYTE" # Species of interest GIEL - bonytail, XYTE - razorback
 
 # Pick a first FY to use scanning data
-FirstScanFY = 2013
+FirstScanFY <- 2013
 
 # Any size class analysis will break fish into 3 size classes
 # Minimum TL for Size Class 2
@@ -33,6 +33,7 @@ source("DataWrangling.R")
 CoreDataFrames <- ls()[vapply(ls(), function(x) is.data.frame(get(x)), logical(1))]
 
 source("AgeStructure.R")
+
 
 ```
 ## Introduction
